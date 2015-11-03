@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	
 	ros::Publisher chatter_pub = n.advertise<krssg_ssl_msgs::SSL_DetectionFrame>("vision", 10000);
-	ros::Rate loop_rate(60);
+	// ros::Rate loop_rate(10);
 
 	
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -43,11 +43,14 @@ int main(int argc, char **argv)
 			//see if the packet contains a robot detection frame:
 			if (packet.has_detection()) {
 				SSL_DetectionFrame detection = packet.detection();
-				double t_now = GetTimeSec();
 				int balls_n = detection.balls_size();
 				int robots_blue_n =  detection.robots_blue_size();
 				int robots_yellow_n =  detection.robots_yellow_size();
 
+				msg.frame_number = detection.frame_number();
+				msg.t_capture = detection.t_capture();
+				msg.t_sent = detection.t_sent();
+				msg.camera_id = detection.camera_id();
 				//Ball info:
 				for (int i = 0; i < balls_n; i++) {
 					SSL_DetectionBall ball = detection.balls(i);
@@ -104,10 +107,11 @@ int main(int argc, char **argv)
 					const SSL_GeometryCameraCalibration & calib = geom.calib(i);
 				}
 			}
+			printf("sending packet...\n");
 			chatter_pub.publish(msg);
 		}
 		ros::spinOnce();
-		loop_rate.sleep();
+		// loop_rate.sleep();
 	}
 
 	return 0;
